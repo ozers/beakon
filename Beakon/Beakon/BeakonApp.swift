@@ -21,7 +21,7 @@ struct BeakonApp: App {
                     startPollingIfNeeded()
                 }
         } label: {
-            Image("MenuBarIcon")
+            menuBarLabel
         }
         .menuBarExtraStyle(.window)
 
@@ -38,6 +38,22 @@ struct BeakonApp: App {
         }
         .defaultLaunchBehavior(.suppressed)
         .windowResizability(.contentSize)
+    }
+
+    @ViewBuilder
+    private var menuBarLabel: some View {
+        let providerId = UserDefaults.standard.string(forKey: "defaultProvider") ?? "claude-code"
+        if let snap = usageService.cachedSnapshot(for: providerId),
+           let limits = snap.limits,
+           let maxItem = limits.items.max(by: { $0.percent < $1.percent }) {
+            HStack(spacing: 3) {
+                Image("MenuBarIcon")
+                Text("\(maxItem.percent)%")
+                    .font(.caption2.monospacedDigit())
+            }
+        } else {
+            Image("MenuBarIcon")
+        }
     }
 
     private var resolvedPollingService: UsagePollingService {

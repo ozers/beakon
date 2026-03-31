@@ -49,6 +49,7 @@ final class UsagePollingService {
 
         if usageService.lastError == nil {
             lastRefreshDate = Date()
+            UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "lastMenuBarFetch")
             if let snapshot = usageService.currentSnapshot {
                 notificationService.checkThresholds(snapshot: snapshot)
             }
