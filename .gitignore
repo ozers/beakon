@@ -1,0 +1,32 @@
+# Xcode
+build/
+DerivedData/
+**/xcuserdata/
+
+# SwiftPM (if used in future)
+.build/
+Package.resolved
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# App archives & export
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Xcode state
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+
+# Code Injection
+iOSInjectionProject/
+
+# Claude Code
+.claude/
+
+# Internal dev notes
+internal_docs/
