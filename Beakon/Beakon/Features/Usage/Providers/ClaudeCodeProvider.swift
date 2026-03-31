@@ -80,8 +80,13 @@ final class ClaudeCodeProvider: UsageProvider {
         return creds
     }
 
+    private var beakonCachePath: URL {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".claude/.beakon_credentials_cache.json")
+    }
+
     private func loadCredentialsFromDisk() -> OAuthCredentials.OAuthData? {
-        // 1. Try file: ~/.claude/.credentials.json
+        // 1. Try Claude Code's own file
         let filePath = claudeDir.appendingPathComponent(".credentials.json")
         if let data = try? Data(contentsOf: filePath),
            let creds = try? JSONDecoder().decode(OAuthCredentials.self, from: data),
@@ -89,11 +94,20 @@ final class ClaudeCodeProvider: UsageProvider {
             return oauth
         }
 
-        // 2. Fallback: macOS Keychain (single read, then cached)
+        // 2. Try Beakon's local cache (written after first Keychain read)
+        if let data = try? Data(contentsOf: beakonCachePath),
+           let creds = try? JSONDecoder().decode(OAuthCredentials.self, from: data),
+           let oauth = creds.claudeAiOauth {
+            return oauth
+        }
+
+        // 3. Last resort: Keychain (triggers macOS prompt once, then we cache it)
         if let json = try? keychain.loadExternal(service: "Claude Code-credentials"),
            let data = json.data(using: .utf8),
            let creds = try? JSONDecoder().decode(OAuthCredentials.self, from: data),
            let oauth = creds.claudeAiOauth {
+            // Cache locally so we never hit Keychain again
+            try? data.write(to: beakonCachePath)
             return oauth
         }
 
@@ -274,24 +288,28 @@ final class ClaudeCodeProvider: UsageProvider {
     }
 
     private func persistCredentials(_ creds: OAuthCredentials.OAuthData) {
-        // Always update in-memory cache
         cachedCredentials = creds
 
-        // Try to persist to file (no Keychain write — avoids repeated macOS permission prompts)
+        // Build updated JSON
+        let updatedJSON: [String: Any] = [
+            "claudeAiOauth": [
+                "accessToken": creds.accessToken,
+                "refreshToken": creds.refreshToken,
+                "expiresAt": creds.expiresAt,
+                "subscriptionType": creds.subscriptionType as Any,
+                "rateLimitTier": creds.rateLimitTier as Any
+            ]
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: updatedJSON, options: .prettyPrinted) else { return }
+
+        // Write to Claude's own file if it exists
         let filePath = claudeDir.appendingPathComponent(".credentials.json")
-        if FileManager.default.fileExists(atPath: filePath.path),
-           let data = try? Data(contentsOf: filePath),
-           var json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           var oauth = json["claudeAiOauth"] as? [String: Any] {
-            oauth["accessToken"] = creds.accessToken
-            oauth["refreshToken"] = creds.refreshToken
-            oauth["expiresAt"] = creds.expiresAt
-            json["claudeAiOauth"] = oauth
-            if let updated = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
-                try? updated.write(to: filePath)
-            }
+        if FileManager.default.fileExists(atPath: filePath.path) {
+            try? data.write(to: filePath)
         }
-        // If no file exists, token lives in memory cache until next app launch
+
+        // Always write to Beakon's local cache
+        try? data.write(to: beakonCachePath)
     }
 
     // MARK: - History parsing (local stats)
