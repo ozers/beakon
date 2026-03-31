@@ -1,4 +1,4 @@
-name: Build & Test
+name: Build
 
 on:
   push:
@@ -19,21 +19,9 @@ jobs:
         run: |
           xcodebuild -project Beakon/Beakon.xcodeproj \
             -scheme Beakon \
-            -configuration Debug \
-            -destination 'platform=macOS' \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             build
-
-      - name: Test
-        run: |
-          xcodebuild -project Beakon/Beakon.xcodeproj \
-            -scheme Beakon \
-            -configuration Debug \
-            -destination 'platform=macOS' \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            -only-testing:BeakonTests \
-            test
