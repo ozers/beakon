@@ -21,6 +21,9 @@ jobs:
             -scheme Beakon \
             -configuration Debug \
             -destination 'platform=macOS' \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
             build
 
       - name: Test
@@ -29,5 +32,8 @@ jobs:
             -scheme Beakon \
             -configuration Debug \
             -destination 'platform=macOS' \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
             -only-testing:BeakonTests \
             test

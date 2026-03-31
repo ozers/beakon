@@ -26,7 +26,7 @@ final class ClaudeCodeProvider: UsageProvider {
     }
 
     var isConfigured: Bool {
-        if let cached = cachedCredentials { return true }
+        if cachedCredentials != nil { return true }
         if credentialsChecked { return false }
         let creds = loadCredentialsFromDisk()
         cachedCredentials = creds
