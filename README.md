@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="beacon.svg" width="128" height="128" alt="Beakon">
+  <img src="beakon-dark.png" width="128" height="128" alt="Beakon">
 </p>
 
 <h1 align="center">Beakon</h1>
