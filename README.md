@@ -5,12 +5,11 @@
 <h1 align="center">Beakon</h1>
 
 <p align="center">
-  <strong>AI usage tracker & prompt vault for your macOS menu bar</strong>
+  <strong>AI usage tracker for your macOS menu bar</strong>
 </p>
 
 <p align="center">
   <a href="#installation">Installation</a> •
-  <a href="#features">Features</a> •
   <a href="#providers">Providers</a> •
   <a href="#building-from-source">Build</a> •
   <a href="#contributing">Contributing</a>
@@ -24,31 +23,16 @@
 
 ---
 
-Beakon is a native macOS menu bar app that tracks your AI usage limits across multiple providers and keeps your best prompts organized. See how much session/weekly capacity you have left at a glance — no dashboards to refresh.
+Beakon is a native macOS menu bar app that tracks your AI usage limits across multiple providers. See how much session/weekly capacity you have left at a glance — no dashboards to refresh, no manual setup.
 
 ## Features
 
-### Usage Monitor
-
 - **Multi-provider** — Claude Code, Cursor, Codex in one place
 - **Live limits** — Session %, weekly %, extra usage with reset timers
-- **OAuth auto-detect** — Reads existing CLI tokens, no manual setup
-- **Token refresh** — Automatically refreshes expired tokens
-- **Dashboard** — Overview + per-provider detail views with 7-day charts
+- **Zero setup** — Reads existing CLI tokens automatically
+- **Dashboard** — Overview + per-provider detail views
 - **Notifications** — Configurable alerts before hitting limits
-
-### Prompt Vault
-
-- **Local-first** — SwiftData-backed, all data stays on your machine
-- **Search** — Full-text search (FTS5) across all prompts
-- **Templates** — `{{variable}}` placeholders with fill UI
-- **Organization** — Categories, tags, favorites, usage tracking
-- **Portable** — JSON export/import
-
-### Extras
-
-- **Global hotkey** — `⌘+Shift+B` to open Beakon from anywhere
-- **iCloud sync** — Optional CloudKit sync for prompt vault
+- **Global hotkey** — `⌘+Shift+B` to open dashboard
 - **No dependencies** — 100% Apple first-party frameworks
 
 ## Providers
@@ -58,16 +42,13 @@ Beakon reads OAuth tokens that your existing CLI tools have already stored local
 | Provider | Token Source | Data |
 |----------|-------------|------|
 | **Claude Code** | `~/.claude/.credentials.json` or Keychain | Session %, weekly %, extra usage, plan tier |
-| **Cursor** | `~/Library/Application Support/Cursor/.../state.vscdb` | Total usage %, credits, auto/composer/API split |
+| **Cursor** | `~/Library/Application Support/Cursor/.../state.vscdb` | Total usage %, credits |
 | **Codex** | `~/.codex/auth.json` or `~/.config/codex/auth.json` | Session %, weekly %, credits balance |
-| **Claude API** | Admin API key (manual) | Token usage, costs by model |
-
-Copilot and ChatGPT providers are stubbed — waiting for OAuth/billing API access.
 
 ### How it works
 
 1. You authenticate with the CLI tool as usual (`claude`, `cursor`, `codex`)
-2. Beakon reads the locally stored OAuth token (one-time Keychain prompt on macOS)
+2. Beakon reads the locally stored OAuth token
 3. Calls the provider's usage API to get live limit data
 4. Refreshes expired tokens automatically
 
@@ -100,20 +81,17 @@ No external dependencies.
 
 ```
 Beakon/
-├── App/                  → Entry point, global state, hotkey, about
+├── App/                  → Entry point, global state, hotkey
 ├── Features/
-│   ├── MenuBar/          → Menu bar icon + popover (limit bars)
+│   ├── MenuBar/          → Menu bar popover (limit bars + inline settings)
 │   ├── Dashboard/        → Overview + per-provider detail views
-│   ├── Usage/
-│   │   ├── Providers/    → OAuth-based providers (Claude, Cursor, Codex, ...)
-│   │   ├── Models/       → UsageSnapshot, ProviderLimits, AuthStatus
-│   │   └── Services/     → Polling, history, orchestration
-│   ├── Vault/            → Prompt library (SwiftData CRUD)
-│   └── Settings/         → Preferences, Claude API key config
+│   └── Usage/
+│       ├── Providers/    → OAuth-based providers (Claude, Cursor, Codex)
+│       ├── Models/       → UsageSnapshot, ProviderLimits, AuthStatus
+│       └── Services/     → Polling, orchestration
 ├── Core/
 │   ├── Networking/       → HTTP client, Anthropic API
-│   ├── Storage/          → Keychain, export/import
-│   ├── Search/           → FTS5 full-text search
+│   ├── Storage/          → Keychain access
 │   └── Notifications/    → Usage threshold alerts
 └── Resources/            → Assets, entitlements
 ```
@@ -154,8 +132,8 @@ UsageSnapshot(
 ## Privacy & Security
 
 - **No telemetry** — Zero analytics, zero tracking
-- **Keychain** — Credentials read from existing CLI keychain entries (read-only)
-- **Local data** — All vault data stored locally via SwiftData
+- **Read-only** — Credentials read from existing CLI entries, never written to Keychain
+- **Local only** — No cloud, no accounts, no data leaves your machine
 - **Open source** — Full source code available for audit
 
 ## Tech Stack
@@ -164,9 +142,8 @@ UsageSnapshot(
 |-----------|-----------|
 | Language | Swift 6 (strict concurrency) |
 | UI | SwiftUI (MenuBarExtra + WindowGroup) |
-| Persistence | SwiftData (SQLite) |
 | Charts | Swift Charts |
-| Credentials | macOS Keychain (Security framework) |
+| Credentials | macOS Keychain (via `security` CLI) |
 | Networking | URLSession + async/await |
 | Minimum | macOS 14.0 (Sonoma) |
 
