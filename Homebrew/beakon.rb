@@ -1,10 +1,10 @@
 cask "beakon" do
-  version "1.0.0"
+  version "0.2.0"
   sha256 :no_check # Update with actual SHA after release
 
   url "https://github.com/ozers/beakon/releases/download/v#{version}/Beakon.dmg"
   name "Beakon"
-  desc "AI usage tracker & prompt vault for your macOS menu bar"
+  desc "AI usage tracker for your macOS menu bar"
   homepage "https://github.com/ozers/beakon"
 
   depends_on macos: ">= :sonoma"
