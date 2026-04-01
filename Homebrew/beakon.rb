@@ -1,5 +1,5 @@
 cask "beakon" do
-  version "0.2.0"
+  version "0.1.3"
   sha256 :no_check # Update with actual SHA after release
 
   url "https://github.com/ozers/beakon/releases/download/v#{version}/Beakon.dmg"
