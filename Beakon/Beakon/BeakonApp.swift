@@ -17,11 +17,11 @@ struct BeakonApp: App {
     var body: some Scene {
         MenuBarExtra {
             MenuBarView(usageService: usageService, pollingService: resolvedPollingService)
+        } label: {
+            menuBarLabel
                 .onAppear {
                     startPollingIfNeeded()
                 }
-        } label: {
-            menuBarLabel
         }
         .menuBarExtraStyle(.window)
 
@@ -45,10 +45,10 @@ struct BeakonApp: App {
         let providerId = UserDefaults.standard.string(forKey: "defaultProvider") ?? "claude-code"
         if let snap = usageService.cachedSnapshot(for: providerId),
            let limits = snap.limits,
-           let maxItem = limits.items.max(by: { $0.percent < $1.percent }) {
+           let primary = limits.items.first(where: { $0.style == .bar }) {
             HStack(spacing: 3) {
                 Image("MenuBarIcon")
-                Text("\(maxItem.percent)%")
+                Text("\(primary.percent)%")
                     .font(.caption2.monospacedDigit())
             }
         } else {

@@ -33,6 +33,11 @@ final class UsagePollingService {
         isPolling = true
         notificationService.requestPermission()
         logger.info("Polling started (interval: \(self.pollingInterval)s)")
+
+        // Fetch immediately on start, then schedule periodic refresh
+        Task { @MainActor in
+            await refresh()
+        }
         scheduleTimer()
     }
 

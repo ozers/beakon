@@ -48,16 +48,25 @@ final class UsageService {
             return
         }
 
-        // For now, use the first configured provider's snapshot
-        // Multi-provider aggregation will come later
-        do {
-            let snapshot = try await configured[0].fetchUsage()
-            currentSnapshot = snapshot
-            onSnapshotUpdate?(snapshot)
-            logger.info("Usage refreshed: \(snapshot.totalTokens) tokens, $\(String(format: "%.2f", snapshot.totalCostUSD))")
-        } catch {
-            lastError = error
-            logger.error("Usage refresh failed: \(error.localizedDescription)")
+        for provider in configured {
+            do {
+                let snapshot = try await provider.fetchUsage()
+                providerSnapshots[provider.id] = snapshot
+                logger.info("Refreshed \(provider.id): \(snapshot.totalTokens) tokens, $\(String(format: "%.2f", snapshot.totalCostUSD))")
+            } catch {
+                logger.error("Refresh \(provider.id) failed: \(error.localizedDescription)")
+                if lastError == nil { lastError = error }
+            }
+        }
+
+        // Keep currentSnapshot pointing to the default provider
+        let defaultId = UserDefaults.standard.string(forKey: "defaultProvider") ?? configured[0].id
+        if let snap = providerSnapshots[defaultId] {
+            currentSnapshot = snap
+            onSnapshotUpdate?(snap)
+        } else if let snap = providerSnapshots[configured[0].id] {
+            currentSnapshot = snap
+            onSnapshotUpdate?(snap)
         }
     }
 

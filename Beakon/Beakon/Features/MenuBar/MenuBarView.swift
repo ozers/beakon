@@ -18,24 +18,39 @@ struct MenuBarView: View {
     @State private var isLoading = false
     @State private var providers: [(id: String, name: String)] = []
     @State private var showSettings = false
+    @State private var showSummary = false
 
     private var snapshot: UsageSnapshot? {
         usageService.cachedSnapshot(for: selectedProvider)
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 0) {
             if showSettings {
                 settingsPage
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .padding(.bottom, 8)
+            } else if showSummary {
+                summaryPage
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .padding(.bottom, 8)
             } else {
                 headerView
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .padding(.bottom, 8)
                 contentView
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 10)
             }
             Divider()
             footerView
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
         }
-        .padding()
-        .frame(width: 300)
+        .frame(width: 280)
         .onAppear {
             providers = usageService.configuredProviders.map { (id: $0.id, name: $0.name) }
             if !providers.contains(where: { $0.id == selectedProvider }),
@@ -43,14 +58,8 @@ struct MenuBarView: View {
                 selectedProvider = first.id
                 UserDefaults.standard.set(first.id, forKey: "defaultProvider")
             }
-            if snapshot == nil && !Self.initialLoadDone {
-                Self.initialLoadDone = true
-                Task { await doLoad() }
-            }
         }
     }
-
-    private static var initialLoadDone = false
 
     // MARK: - Header
 
@@ -105,9 +114,12 @@ struct MenuBarView: View {
         if let snap = snapshot {
             limitsSection(snap)
 
-            HStack {
-                Spacer()
-                Text(updatedAgoText).font(.caption2).foregroundStyle(.quaternary)
+            if !updatedAgoText.isEmpty {
+                HStack {
+                    Spacer()
+                    Text(updatedAgoText).font(.caption2).foregroundStyle(.tertiary)
+                }
+                .padding(.top, 4)
             }
         } else if providers.isEmpty {
             VStack(alignment: .leading, spacing: 4) {
@@ -164,7 +176,10 @@ struct MenuBarView: View {
                         Text("30 min").tag(1800)
                     }
                     .frame(width: 100)
-                    .onChange(of: pollingInterval) { _, v in UserDefaults.standard.set(v, forKey: "pollingInterval") }
+                    .onChange(of: pollingInterval) { _, v in
+                                UserDefaults.standard.set(v, forKey: "pollingInterval")
+                                pollingService.restartWithCurrentInterval()
+                            }
                 }
                 .font(.caption)
 
@@ -270,16 +285,25 @@ struct MenuBarView: View {
 
     @ViewBuilder
     private func limitBar(title: String, percent: Int, detail: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
             HStack {
-                Text(title).font(.caption.bold())
+                Text(title).font(.caption)
                 Spacer()
                 Text("\(percent)%")
                     .font(.caption.monospacedDigit().bold())
                     .foregroundStyle(limitColor(percent))
             }
-            ProgressView(value: Double(min(percent, 100)) / 100.0)
-                .tint(limitColor(percent))
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 2.5)
+                        .fill(.quaternary)
+                        .frame(height: 5)
+                    RoundedRectangle(cornerRadius: 2.5)
+                        .fill(limitColor(percent))
+                        .frame(width: geo.size.width * Double(min(percent, 100)) / 100.0, height: 5)
+                }
+            }
+            .frame(height: 5)
             if !detail.isEmpty {
                 Text(detail).font(.caption2).foregroundStyle(.secondary)
             }
@@ -290,6 +314,81 @@ struct MenuBarView: View {
         percent >= 80 ? .red : percent >= 50 ? .orange : .blue
     }
 
+    // MARK: - Summary Page
+
+    private var summaryPage: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Button { showSummary = false } label: {
+                    Image(systemName: "chevron.left").font(.caption.bold())
+                }
+                .buttonStyle(.borderless)
+                Text("All Providers").font(.headline)
+                Spacer()
+            }
+
+            if providers.isEmpty {
+                Text("No providers configured")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(providers, id: \.id) { provider in
+                    summaryProviderRow(id: provider.id, name: provider.name)
+                    if provider.id != providers.last?.id {
+                        Divider()
+                    }
+                }
+            }
+        }
+    }
+
+    private func summaryProviderRow(id: String, name: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                ProviderIconView(providerId: id, size: 12)
+                Text(name).font(.caption.bold())
+                Spacer()
+                if let snap = usageService.cachedSnapshot(for: id), let plan = snap.planName {
+                    Text(plan)
+                        .font(.system(size: 9).bold())
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 3))
+                }
+            }
+
+            if let snap = usageService.cachedSnapshot(for: id),
+               let limits = snap.limits,
+               let primary = limits.items.first(where: { $0.style == .bar }) {
+                HStack(spacing: 6) {
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 2.5)
+                                .fill(.quaternary)
+                                .frame(height: 5)
+                            RoundedRectangle(cornerRadius: 2.5)
+                                .fill(limitColor(primary.percent))
+                                .frame(width: geo.size.width * Double(min(primary.percent, 100)) / 100.0, height: 5)
+                        }
+                    }
+                    .frame(height: 5)
+                    Text("\(primary.percent)%")
+                        .font(.caption2.monospacedDigit().bold())
+                        .foregroundStyle(limitColor(primary.percent))
+                        .frame(width: 32, alignment: .trailing)
+                }
+                if !primary.detail.isEmpty {
+                    Text(primary.detail)
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+            } else {
+                Text("No data")
+                    .font(.caption2).foregroundStyle(.tertiary)
+            }
+        }
+    }
+
     // MARK: - Footer
 
     private var footerView: some View {
@@ -298,8 +397,15 @@ struct MenuBarView: View {
                 NSApp.activate()
                 openWindow(id: "main")
             }
+            Spacer()
+            footerBtn(icon: "list.bullet", label: "Summary") {
+                showSummary.toggle()
+                showSettings = false
+            }
+            Spacer()
             footerBtn(icon: "gear", label: "Settings") {
                 showSettings.toggle()
+                showSummary = false
             }
             Spacer()
             footerBtn(icon: "power", label: "Quit") { NSApplication.shared.terminate(nil) }
@@ -309,10 +415,10 @@ struct MenuBarView: View {
     private func footerBtn(icon: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 2) {
-                Image(systemName: icon).font(.system(size: 13))
+                Image(systemName: icon).font(.system(size: 12))
                 Text(label).font(.system(size: 9))
             }
-            .frame(width: 56, height: 36)
+            .frame(width: 60, height: 32)
             .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
