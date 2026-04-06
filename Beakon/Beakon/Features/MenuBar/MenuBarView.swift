@@ -291,12 +291,11 @@ struct MenuBarView: View {
                 Spacer()
                 Text("\(percent)%")
                     .font(.caption.monospacedDigit().bold())
-                    .foregroundStyle(limitColor(percent))
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 2.5)
-                        .fill(Color.primary.opacity(0.12))
+                        .fill(Color.primary.opacity(0.15))
                         .frame(height: 5)
                     RoundedRectangle(cornerRadius: 2.5)
                         .fill(limitColor(percent))
@@ -305,7 +304,7 @@ struct MenuBarView: View {
             }
             .frame(height: 5)
             if !detail.isEmpty {
-                Text(detail).font(.caption2).foregroundStyle(.primary.opacity(0.55))
+                Text(detail).font(.caption2).foregroundStyle(.primary.opacity(0.65))
             }
         }
     }
@@ -365,7 +364,7 @@ struct MenuBarView: View {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 2.5)
-                                .fill(Color.primary.opacity(0.12))
+                                .fill(Color.primary.opacity(0.15))
                                 .frame(height: 5)
                             RoundedRectangle(cornerRadius: 2.5)
                                 .fill(limitColor(primary.percent))
@@ -375,12 +374,11 @@ struct MenuBarView: View {
                     .frame(height: 5)
                     Text("\(primary.percent)%")
                         .font(.caption2.monospacedDigit().bold())
-                        .foregroundStyle(limitColor(primary.percent))
                         .frame(width: 32, alignment: .trailing)
                 }
                 if !primary.detail.isEmpty {
                     Text(primary.detail)
-                        .font(.caption2).foregroundStyle(.primary.opacity(0.55))
+                        .font(.caption2).foregroundStyle(.primary.opacity(0.65))
                 }
             } else {
                 Text("No data")
