@@ -34,6 +34,7 @@ struct OverviewDashboardView: View {
             }
             .padding(24)
         }
+        .onAppear { loadCached() }
         .task { await fetchAll() }
     }
 
@@ -184,6 +185,16 @@ struct OverviewDashboardView: View {
     }
 
     // MARK: - Data
+
+    private func loadCached() {
+        let configured = usageService.allProviders.filter { $0.isConfigured }
+        providerList = configured.map { (id: $0.id, name: $0.name) }
+        for provider in configured {
+            if let snap = usageService.cachedSnapshot(for: provider.id) {
+                snapshots[provider.id] = snap
+            }
+        }
+    }
 
     private func fetchAll() async {
         let configured = usageService.allProviders.filter { $0.isConfigured }

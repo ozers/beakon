@@ -117,7 +117,7 @@ struct MenuBarView: View {
             if !updatedAgoText.isEmpty {
                 HStack {
                     Spacer()
-                    Text(updatedAgoText).font(.caption2).foregroundStyle(.tertiary)
+                    Text(updatedAgoText).font(.caption2).foregroundStyle(.secondary)
                 }
                 .padding(.top, 4)
             }
@@ -126,7 +126,7 @@ struct MenuBarView: View {
                 Text("No provider configured")
                     .font(.subheadline).foregroundStyle(.secondary)
                 Text("Install Claude Code or add an API key in Settings")
-                    .font(.caption).foregroundStyle(.tertiary)
+                    .font(.caption).foregroundStyle(.secondary)
             }
         } else if isLoading {
             HStack(spacing: 8) {
@@ -140,7 +140,7 @@ struct MenuBarView: View {
                 Text("Could not fetch usage data")
                     .font(.caption).foregroundStyle(.secondary)
                 Text("Rate limited — will retry automatically")
-                    .font(.caption2).foregroundStyle(.tertiary)
+                    .font(.caption2).foregroundStyle(.secondary)
                 Button("Retry") { Task { await doLoad() } }
                     .controlSize(.small)
             }
@@ -214,7 +214,7 @@ struct MenuBarView: View {
                     .frame(width: 24, height: 24)
                     .clipShape(RoundedRectangle(cornerRadius: 5))
                 Text("Beakon v\(AppConstants.appVersion)")
-                    .font(.caption2).foregroundStyle(.tertiary)
+                    .font(.caption2).foregroundStyle(.secondary)
             }
         }
     }
@@ -252,7 +252,7 @@ struct MenuBarView: View {
                                 .font(.caption2.bold())
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
-                                .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                                .background(Color.primary.opacity(0.1), in: RoundedRectangle(cornerRadius: 4))
                         }
                     }
                     ForEach(Array(limits.items.enumerated()), id: \.offset) { _, item in
@@ -296,7 +296,7 @@ struct MenuBarView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 2.5)
-                        .fill(.quaternary)
+                        .fill(Color.primary.opacity(0.12))
                         .frame(height: 5)
                     RoundedRectangle(cornerRadius: 2.5)
                         .fill(limitColor(percent))
@@ -305,13 +305,13 @@ struct MenuBarView: View {
             }
             .frame(height: 5)
             if !detail.isEmpty {
-                Text(detail).font(.caption2).foregroundStyle(.secondary)
+                Text(detail).font(.caption2).foregroundStyle(.primary.opacity(0.55))
             }
         }
     }
 
     private func limitColor(_ percent: Int) -> Color {
-        percent >= 80 ? .red : percent >= 50 ? .orange : .blue
+        percent >= 80 ? .red : percent >= 50 ? .orange : .accentColor
     }
 
     // MARK: - Summary Page
@@ -354,7 +354,7 @@ struct MenuBarView: View {
                         .font(.system(size: 9).bold())
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
-                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 3))
+                        .background(Color.primary.opacity(0.1), in: RoundedRectangle(cornerRadius: 3))
                 }
             }
 
@@ -365,7 +365,7 @@ struct MenuBarView: View {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 2.5)
-                                .fill(.quaternary)
+                                .fill(Color.primary.opacity(0.12))
                                 .frame(height: 5)
                             RoundedRectangle(cornerRadius: 2.5)
                                 .fill(limitColor(primary.percent))
@@ -380,11 +380,11 @@ struct MenuBarView: View {
                 }
                 if !primary.detail.isEmpty {
                     Text(primary.detail)
-                        .font(.caption2).foregroundStyle(.secondary)
+                        .font(.caption2).foregroundStyle(.primary.opacity(0.55))
                 }
             } else {
                 Text("No data")
-                    .font(.caption2).foregroundStyle(.tertiary)
+                    .font(.caption2).foregroundStyle(.secondary)
             }
         }
     }

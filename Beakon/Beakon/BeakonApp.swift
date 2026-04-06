@@ -9,14 +9,20 @@ import SwiftUI
 
 @main
 struct BeakonApp: App {
-    @State private var usageService = UsageService()
-    @State private var pollingService: UsagePollingService?
+    @State private var usageService: UsageService
+    @State private var pollingService: UsagePollingService
     @State private var hotkeyService: GlobalHotkeyService?
     @Environment(\.openWindow) private var openWindow
 
+    init() {
+        let usage = UsageService()
+        _usageService = State(initialValue: usage)
+        _pollingService = State(initialValue: UsagePollingService(usageService: usage))
+    }
+
     var body: some Scene {
         MenuBarExtra {
-            MenuBarView(usageService: usageService, pollingService: resolvedPollingService)
+            MenuBarView(usageService: usageService, pollingService: pollingService)
         } label: {
             menuBarLabel
                 .onAppear {
@@ -28,7 +34,7 @@ struct BeakonApp: App {
         Window("Beakon", id: "main") {
             MainWindowView()
                 .environment(usageService)
-                .environment(resolvedPollingService)
+                .environment(pollingService)
         }
         .defaultLaunchBehavior(.suppressed)
         .keyboardShortcut("b", modifiers: [.command, .shift])
@@ -56,21 +62,9 @@ struct BeakonApp: App {
         }
     }
 
-    private var resolvedPollingService: UsagePollingService {
-        if let existing = pollingService {
-            return existing
-        }
-        let service = UsagePollingService(usageService: usageService)
-        Task { @MainActor in
-            pollingService = service
-        }
-        return service
-    }
-
     private func startPollingIfNeeded() {
-        let service = resolvedPollingService
-        if !service.isPolling {
-            service.start()
+        if !pollingService.isPolling {
+            pollingService.start()
         }
 
         if hotkeyService == nil {

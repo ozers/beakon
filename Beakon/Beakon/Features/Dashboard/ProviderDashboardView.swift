@@ -57,10 +57,17 @@ struct ProviderDashboardView: View {
             }
             .padding(24)
         }
-        .task { await fetchData() }
+        .onAppear { loadCached() }
     }
 
     // MARK: - Fetch
+
+    private func loadCached() {
+        if let provider = usageService.allProviders.first(where: { $0.id == providerId }) {
+            providerName = provider.name
+        }
+        snapshot = usageService.cachedSnapshot(for: providerId)
+    }
 
     private func fetchData() async {
         guard let provider = usageService.allProviders.first(where: { $0.id == providerId }),
